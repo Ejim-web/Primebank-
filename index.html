@@ -1,1 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrimeBank – Online Banking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0b1a33;
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+            padding-top: 10px;
+        }
+        .container { max-width: 480px; margin: 0 auto; }
 
+        /* Header */
+        .bank-header {
+            background: linear-gradient(145deg, #0b1a33, #0f2647);
+            padding: 20px 20px 15px;
+            border-radius: 0 0 30px 30px;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .bank-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .bank-header .logo i { font-size: 2rem; }
+        .bank-header .tagline {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Cards */
+        .card {
+            background: #ffffff;
+            border-radius: 24px;
+            border: none;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            padding: 20px;
+            margin-bottom: 18px;
+            transition: transform 0.1s;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a2a4a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title i { color: #0f2647; width: 24px; }
+
+        /* Balance */
+        .balance-box {
+            text-align: center;
+            padding: 10px 0;
+        }
+        .balance-label {
+            font-size: 0.85rem;
+            color: #6b7a8f;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .balance-amount {
+            font-size: 3.2rem;
+            font-weight: 700;
+            color: #0b1a33;
+            letter-spacing: 1px;
+        }
+        .balance-amount .currency { font-size: 2rem; color: #1a2a4a; }
+
+        /* Buttons */
+        .btn-primary { background: #0b1a33; border: none; }
+        .btn-primary:hover { background: #1f3a6b; }
+        .btn-success { background: #0f9d58; border: none; }
+        .btn-success:hover { background: #0b7a44; }
+        .btn-warning { background: #f4b400; border: none; color: #000; }
+        .btn-warning:hover { background: #d49d00; }
+        .btn-danger { background: #db4437; border: none; }
+
+        /* Form inputs */
+        .form-control {
+            border-radius: 12px;
+            border: 1px solid #dde1e6;
+            padding: 12px 16px;
+            font-size: 1rem;
+            background: #f8f9fc;
+        }
+        .form-control:focus {
+            border-color: #0b1a33;
+            box-shadow: 0 0 0 3px rgba(11,26,51,0.1);
+        }
+
+        /* Nav tabs (Login/Register) */
+        .nav-tabs {
+            border: none;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            border-radius: 30px;
+            padding: 10px 28px;
+            font-weight: 600;
+            color: #8a9bb5;
+            background: transparent;
+            transition: 0.2s;
+        }
+        .nav-tabs .nav-link.active {
+            background: #0b1a33;
+            color: white;
+            box-shadow: 0 4px 12px rgba(11,26,51,0.3);
+        }
+        .nav-tabs .nav-link:hover:not(.active) {
+            color: white;
+        }
+
+        /* Transaction list */
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .transaction-item:last-child { border-bottom: none; }
+        .tx-desc { font-weight: 500; color: #1a2a4a; }
+        .tx-amount { font-weight: 600; }
+        .tx-amount.positive { color: #0f9d58; }
+        .tx-amount.negative { color: #db4437; }
+        .tx-date { font-size: 0.75rem; color: #8a9bb5; }
+
+        /* Alerts */
+        .alert { border-radius: 16px; }
+
+        /* Hidden state */
+        .hidden { display: none; }
+
+        /* Account number badge */
+        .acct-badge {
+            background: #eef3f9;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #0b1a33;
+            display: inline-block;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .balance-amount { font-size: 2.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- BANK HEADER -->
+    <div class="bank-header">
+        <div class="logo">
+            <i class="fas fa-university"></i> PrimeBank
+        </div>
+        <div class="tagline">Secure · Fast · Reliable</div>
+    </div>
+
+    <!-- AUTH SECTION -->
+    <div id="authSection">
+        <ul class="nav nav-tabs justify-content-center" id="authTab">
+            <li class="nav-item">
+                <button class="nav-link active" id="loginTabBtn" onclick="switchTab('login')">Login</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="registerTabBtn" onclick="switchTab('register')">Register</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- LOGIN -->
+            <div class="tab-pane active" id="loginForm">
+                <div class="card">
+                    <div id="loginAlert" class="alert alert-danger hidden"></div>
+                    <input type="email" id="loginUsername" class="form-control mb-3" placeholder="Email address">
+                    <input type="password" id="loginPassword" class="form-control mb-3" placeholder="Password">
+                    <button class="btn btn-primary w-100" onclick="login()">Login</button>
+                    <p class="text-center text-muted mt-3 small">
+                        Don't have an account? <span style="color:#0b1a33;font-weight:600;cursor:pointer;" onclick="switchTab('register')">Register</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- REGISTER -->
+            <div class="tab-pane" id="registerForm">
+                <div class="card">
+                    <div id="registerAlert" class="alert alert-danger hidden"></div>
+                    <input type="email" id="regUsername" class="form-control mb-3" placeholder="Email address">
+                    <input type="password" id="regPassword" class="form-control mb-3" placeholder="Password (min 6 chars)">
+                    <button class="btn btn-success w-100" onclick="register()">Create Account</button>
+                    <p class="text-center text-muted mt-3 small">
+                        Already have an account? <span style="color:#0b1a33;font-weight:600;cursor:pointer;" onclick="switchTab('login')">Login</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboardSection" class="hidden">
+        <!-- Balance Card -->
+        <div class="card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:0.8rem;color:#6b7a8f;">Checking Account</div>
+                    <div style="font-weight:600;color:#0b1a33;font-size:1.1rem;" id="displayUsername">User</div>
+                </div>
+                <button class="btn btn-sm btn-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+            <hr>
+            <div class="balance-box">
+                <div class="balance-label">Available Balance</div>
+                <div class="balance-amount"><span class="currency">$</span><span id="balance">0.00</span></div>
+            </div>
+            <div class="text-center mt-2">
+                <span class="acct-badge"><i class="fas fa-hashtag"></i> Account #<span id="accountNumber">—</span></span>
+            </div>
+        </div>
+
+        <!-- Deposit / Withdraw -->
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="card" style="padding:15px;">
+                    <h6 class="card-title"><i class="fas fa-arrow-down"></i> Deposit</h6>
+                    <input type="number" id="depositAmount" class="form-control mb-2" placeholder="0.00" step="0.01">
+                    <button class="btn btn-success w-100" onclick="deposit()">Deposit</button>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card" style="padding:15px;">
+                    <h6 class="card-title"><i class="fas fa-arrow-up"></i> Withdraw</h6>
+                    <input type="number" id="withdrawAmount" class="form-control mb-2" placeholder="0.00" step="0.01">
+                    <button class="btn btn-warning w-100" onclick="withdraw()">Withdraw</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transfer -->
+        <div class="card">
+            <h6 class="card-title"><i class="fas fa-paper-plane"></i> Transfer Funds</h6>
+            <div class="row g-2">
+                <div class="col-7">
+                    <input type="text" id="transferToAccount" class="form-control" placeholder="Recipient Account #">
+                </div>
+                <div class="col-5">
+                    <input type="number" id="transferAmount" class="form-control" placeholder="Amount" step="0.01">
+                </div>
+                <div class="col-12 mt-2">
+                    <button class="btn btn-primary w-100" onclick="transfer()">Transfer</button>
+                </div>
+            </div>
+            <div id="transferMsg" class="mt-2 text-center small"></div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="card">
+            <h6 class="card-title"><i class="fas fa-history"></i> Recent Transactions</h6>
+            <div id="transactionList">
+                <p class="text-muted text-center small">No transactions yet.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore-compat.js"></script>
+
+<!-- EmailJS (optional) -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+<script>
+    // =========================================================
+    //  🔥 YOUR FIREBASE CONFIG
+    // =========================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyCr1IkJ6_SMhTJvY3K3GG6SoIRe1LOZ0nQ",
+        authDomain: "vibeloop-44c45.firebaseapp.com",
+        projectId: "vibeloop-44c45",
+        storageBucket: "vibeloop-44c45.firebasestorage.app",
+        messagingSenderId: "776248914692",
+        appId: "1:776248914692:web:b883192e8498e5a5351651",
+        measurementId: "G-HS1PCPSJZR"
+    };
+    // =========================================================
+
+    // =========================================================
+    //  📧 EMAILJS (optional – set ENABLE_EMAIL = false to disable)
+    // =========================================================
+    const ENABLE_EMAIL = true;
+    const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY";
+    const EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID";
+    const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";
+    const OWNER_EMAIL = "paulfcarter8@gmail.com";   // Your email – gets $400,000
+    // =========================================================
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    if (ENABLE_EMAIL && EMAILJS_PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+    }
+
+    let currentUser = null;
+
+    // ---------- UTILITY: Generate random 10-digit account number ----------
+    function generateAccountNumber() {
+        let num = '';
+        for (let i = 0; i < 10; i++) {
+            num += Math.floor(Math.random() * 10);
+        }
+        return num;
+    }
+
+    // ---------- TAB SWITCH ----------
+    function switchTab(tab) {
+        const loginBtn = document.getElementById('loginTabBtn');
+        const registerBtn = document.getElementById('registerTabBtn');
+        const loginPane = document.getElementById('loginForm');
+        const registerPane = document.getElementById('registerForm');
+
+        if (tab === 'login') {
+            loginBtn.classList.add('active');
+            registerBtn.classList.remove('active');
+            loginPane.classList.add('active');
+            registerPane.classList.remove('active');
+        } else {
+            registerBtn.classList.add('active');
+            loginBtn.classList.remove('active');
+            registerPane.classList.add('active');
+            loginPane.classList.remove('active');
+        }
+        showAlert('loginAlert', '');
+        showAlert('registerAlert', '');
+    }
+
+    function showAlert(id, msg) {
+        const el = document.getElementById(id);
+        if (!msg) { el.classList.add('hidden'); el.innerText = ''; return; }
+        el.classList.remove('hidden'); el.innerText = msg;
+    }
+
+    function updateDashboard() {
+        if (!currentUser) return;
+        document.getElementById('displayUsername').innerText = currentUser;
+    }
+
+    // ---------- REAL‑TIME BALANCE & ACCOUNT # ----------
+    function listenToBalance() {
+        if (!currentUser) return;
+        const docRef = db.collection('users').doc(currentUser);
+        docRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('balance').innerText = (data.balance || 0).toFixed(2);
+                document.getElementById('accountNumber').innerText = data.accountNumber || '—';
+                loadTransactions();
+            } else {
+                // Create document with balance and account number
+                let initialBalance = 0;
+                let accountNumber = generateAccountNumber();
+                if (currentUser === OWNER_EMAIL) {
+                    initialBalance = 400000;
+                }
+                docRef.set({ balance: initialBalance, accountNumber: accountNumber, transactions: [] });
+            }
+        }, (error) => {
+            console.error("Firestore listener error:", error);
+        });
+    }
+
+    // ---------- LOAD TRANSACTIONS ----------
+    async function loadTransactions() {
+        if (!currentUser) return;
+        try {
+            const doc = await db.collection('users').doc(currentUser).get();
+            if (doc.exists) {
+                const data = doc.data();
+                const txs = data.transactions || [];
+                const container = document.getElementById('transactionList');
+                if (txs.length === 0) {
+                    container.innerHTML = '<p class="text-muted text-center small">No transactions yet.</p>';
+                    return;
+                }
+                let html = '';
+                txs.slice().reverse().forEach(tx => {
+                    const date = tx.timestamp?.seconds
+                        ? new Date(tx.timestamp.seconds * 1000).toLocaleString()
+                        : new Date(tx.timestamp).toLocaleString();
+                    const amountClass = (tx.type === 'deposit' || tx.type === 'transfer_in') ? 'positive' : 'negative';
+                    const sign = (tx.type === 'deposit' || tx.type === 'transfer_in') ? '+' : '-';
+                    html += `
+                        <div class="transaction-item">
+                            <div>
+                                <div class="tx-desc">${tx.description || tx.type}</div>
+                                <div class="tx-date">${date}</div>
+                            </div>
+                            <div class="tx-amount ${amountClass}">${sign}$${tx.amount.toFixed(2)}</div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+        } catch (e) {
+            console.error("Error loading transactions:", e);
+        }
+    }
+
+    // ---------- REGISTER ----------
+    async function register() {
+        const email = document.getElementById('regUsername').value.trim();
+        const password = document.getElementById('regPassword').value.trim();
+        if (!email || !password) {
+            showAlert('registerAlert', 'Email and password required');
+            return;
+        }
+        if (password.length < 6) {
+            showAlert('registerAlert', 'Password must be at least 6 characters');
+            return;
+        }
+        try {
+            await auth.createUserWithEmailAndPassword(email, password);
+            let initialBalance = 0;
+            if (email === OWNER_EMAIL) {
+                initialBalance = 400000;
+            }
+            const accountNumber = generateAccountNumber();
+            await db.collection('users').doc(email).set({
+                balance: initialBalance,
+                accountNumber: accountNumber,
+                transactions: []
+            });
+            showAlert('registerAlert', '✅ Account created! Switch to Login.');
+            document.getElementById('loginUsername').value = email;
+            document.getElementById('loginPassword').value = '';
+            switchTab('login');
+        } catch (err) {
+            showAlert('registerAlert', err.message);
+        }
+    }
+
+    // ---------- LOGIN ----------
+    async function login() {
+        const email = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        if (!email || !password) {
+            showAlert('loginAlert', 'Email and password required');
+            return;
+        }
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            currentUser = email;
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            updateDashboard();
+            listenToBalance();
+            sessionStorage.setItem('primebank_current_user', email);
+        } catch (err) {
+            if (err.code === 'auth/user-not-found') {
+                showAlert('loginAlert', '❌ No account found. Please Register first.');
+                switchTab('register');
+                document.getElementById('regUsername').value = email;
+            } else {
+                showAlert('loginAlert', err.message);
+            }
+        }
+    }
+
+    function logout() {
+        auth.signOut();
+        currentUser = null;
+        document.getElementById('authSection').classList.remove('hidden');
+        document.getElementById('dashboardSection').classList.add('hidden');
+        showAlert('loginAlert', '');
+        showAlert('registerAlert', '');
+        sessionStorage.removeItem('primebank_current_user');
+        switchTab('login');
+    }
+
+    // ---------- DEPOSIT ----------
+    async function deposit() {
+        if (!currentUser) return;
+        const amount = parseFloat(document.getElementById('depositAmount').value);
+        if (!amount || amount <= 0) return alert('Enter a valid amount.');
+        try {
+            const docRef = db.collection('users').doc(currentUser);
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(docRef);
+                const newBalance = (doc.data().balance || 0) + amount;
+                const txs = doc.data().transactions || [];
+                txs.push({ type: 'deposit', amount, description: 'Deposit', timestamp: firebase.firestore.Timestamp.now() });
+                transaction.update(docRef, { balance: newBalance, transactions: txs });
+            });
+            document.getElementById('depositAmount').value = '';
+        } catch (e) {
+            alert('Deposit failed: ' + e.message);
+        }
+    }
+
+    // ---------- WITHDRAW ----------
+    async function withdraw() {
+        if (!currentUser) return;
+        const amount = parseFloat(document.getElementById('withdrawAmount').value);
+        if (!amount || amount <= 0) return alert('Enter a valid amount.');
+        try {
+            const docRef = db.collection('users').doc(currentUser);
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(docRef);
+                const balance = doc.data().balance || 0;
+                if (balance < amount) throw new Error('Insufficient funds.');
+                const newBalance = balance - amount;
+                const txs = doc.data().transactions || [];
+                txs.push({ type: 'withdraw', amount, description: 'Withdrawal', timestamp: firebase.firestore.Timestamp.now() });
+                transaction.update(docRef, { balance: newBalance, transactions: txs });
+            });
+            document.getElementById('withdrawAmount').value = '';
+        } catch (e) {
+            alert(e.message);
+        }
+    }
+
+    // ---------- TRANSFER (BY ACCOUNT NUMBER) ----------
+    async function transfer() {
+        if (!currentUser) return;
+        const accountNumber = document.getElementById('transferToAccount').value.trim();
+        const amount = parseFloat(document.getElementById('transferAmount').value);
+        if (!accountNumber || !amount || amount <= 0) return alert('Enter valid account number and amount.');
+
+        // Look up recipient by account number
+        try {
+            // Query Firestore for user with this account number
+            const usersRef = db.collection('users');
+            const querySnapshot = await usersRef.where('accountNumber', '==', accountNumber).get();
+            if (querySnapshot.empty) {
+                alert('❌ Account number not found.');
+                return;
+            }
+            // Get the first match (account numbers are unique)
+            const recipientDoc = querySnapshot.docs[0];
+            const recipientEmail = recipientDoc.id;
+            if (recipientEmail === currentUser) {
+                alert('Cannot transfer to your own account.');
+                return;
+            }
+
+            // Perform transfer
+            const senderRef = db.collection('users').doc(currentUser);
+            const recipientRef = db.collection('users').doc(recipientEmail);
+
+            await db.runTransaction(async (transaction) => {
+                const senderDoc = await transaction.get(senderRef);
+                const senderBalance = senderDoc.data().balance || 0;
+                if (senderBalance < amount) throw new Error('Insufficient funds.');
+
+                // Update sender
+                const senderTxs = senderDoc.data().transactions || [];
+                senderTxs.push({
+                    type: 'transfer_out',
+                    amount,
+                    description: `Transfer to account ${accountNumber}`,
+                    timestamp: firebase.firestore.Timestamp.now()
+                });
+                transaction.update(senderRef, {
+                    balance: senderBalance - amount,
+                    transactions: senderTxs
+                });
+
+                // Update recipient
+                const recipientDocSnap = await transaction.get(recipientRef);
+                const recipientTxs = recipientDocSnap.data().transactions || [];
+                recipientTxs.push({
+                    type: 'transfer_in',
+                    amount,
+                    description: `Transfer from ${currentUser}`,
+                    timestamp: firebase.firestore.Timestamp.now()
+                });
+                transaction.update(recipientRef, {
+                    balance: (recipientDocSnap.data().balance || 0) + amount,
+                    transactions: recipientTxs
+                });
+            });
+
+            document.getElementById('transferToAccount').value = '';
+            document.getElementById('transferAmount').value = '';
+            document.getElementById('transferMsg').innerHTML = '<span style="color:#0f9d58;font-weight:500;">✅ Transfer successful!</span>';
+
+            // Email notification (optional)
+            if (ENABLE_EMAIL && EMAILJS_PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
+                try {
+                    const templateParams = {
+                        to_email: OWNER_EMAIL,
+                        from_user: currentUser,
+                        to_user: recipientEmail,
+                        amount: amount.toFixed(2),
+                        timestamp: new Date().toLocaleString()
+                    };
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+                    console.log("📧 Email sent.");
+                } catch (err) {
+                    console.error("Email failed:", err);
+                }
+            }
+        } catch (e) {
+            alert(e.message);
+        }
+    }
+
+    // ---------- AUTO-LOGIN ----------
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user.email;
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            updateDashboard();
+            listenToBalance();
+            sessionStorage.setItem('primebank_current_user', currentUser);
+        }
+    });
+
+    // Enter key support
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            if (document.getElementById('loginForm').classList.contains('active')) {
+                login();
+            } else if (document.getElementById('registerForm').classList.contains('active')) {
+                register();
+            }
+        }
+    });
+
+    console.log("🏦 PrimeBank loaded with account numbers.");
+</script>
+</body>
+</html>
